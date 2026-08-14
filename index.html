@@ -212,13 +212,11 @@
   .modal-p{font-size:13px;color:var(--ink-soft);margin-bottom:18px}
   .modal-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;border:none;background:var(--bg);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;cursor:pointer}
 
-  /* AYUDAS dentro del panel persona */
-  .ayudas-sec{margin-top:20px;padding-top:18px;border-top:1px dashed var(--line-strong)}
-  .ayudas-titulo{display:flex;align-items:center;gap:8px;font-family:'Poppins';font-size:13px;font-weight:600;color:var(--rose);margin-bottom:11px}
-  .ayuda-link{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid var(--line-strong);border-radius:var(--r-md);background:#fffbfd;text-decoration:none;color:var(--ink);font-weight:600;font-size:14px;margin-bottom:9px;transition:.15s}
-  .ayuda-link:hover{border-color:var(--pink);background:var(--pink-soft)}
-  .ayuda-link .ayuda-ic{width:38px;height:38px;border-radius:50%;background:var(--pink-soft);color:var(--rose);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .ayuda-link .ayuda-go{margin-left:auto;color:var(--muted)}
+  /* VOZ DEL CONSUMIDOR: grupos de opciones con emoji */
+  .opt-grid.emoji-grid{grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px}
+  .opt-grid.emoji-grid .opt label{flex-direction:column;gap:4px;padding:10px 6px;min-height:66px}
+  .emoji-ic{font-size:23px;line-height:1}
+  .emoji-lbl{font-size:10px;font-weight:600;line-height:1.2}
 </style>
 </head>
 <body>
@@ -486,11 +484,6 @@
     <div class="res-line"><span class="rk">Teléfono</span><span class="rv" id="pTel">—</span></div>
     <div class="merc-chip" style="margin:16px 0"><div class="merc-ava"><svg class="icon"><use href="#i-pin"/></svg></div><div class="merc-info"><b>Punto de venta</b><span id="pPdvActual">—</span></div><button type="button" class="btn btn-outline btn-sm" onclick="cerrarPersona();reabrirPortada()"><svg class="icon icon-sm"><use href="#i-edit"/></svg>Cambiar</button></div>
     <div class="merc-chip" style="margin:0"><div class="merc-ava"><svg class="icon"><use href="#i-id"/></svg></div><div class="merc-info"><b>Código de sesión</b><span id="pCodigoSesion">—</span></div><button type="button" class="btn btn-outline btn-sm" onclick="copiarCodigoSesion()"><svg class="icon icon-sm"><use href="#i-copy"/></svg>Copiar</button></div>
-
-    <div class="ayudas-sec">
-      <div class="ayudas-titulo"><svg class="icon icon-sm"><use href="#i-help"/></svg>Material de apoyo</div>
-      <a class="ayuda-link" id="ayudaDrive" target="_blank" rel="noopener"><span class="ayuda-ic"><svg class="icon"><use href="#i-box"/></svg></span>Abrir Drive<svg class="icon icon-sm ayuda-go"><use href="#i-chevR"/></svg></a>
-    </div>
   </div>
 </div>
 
@@ -532,8 +525,7 @@
 </div></div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbynkUE1pJ9ivjHeIChSc2HIIsqx_69ukxzYFZRrKfyEJIbV2IKCspc9cwKqZe0P2gIM/exec'; // Reemplaza esto tras publicar codigo.gs como Aplicación web (Implementar > Nueva implementación)
-const AYUDAS = { drive: 'https://drive.google.com/drive/folders/14Q7NhTp5G8L2semAK2fhAEu2DEcbxDw1?usp=sharing' };
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbynkUE1pJ9ivjHeIChSc2HIIsqx_69ukxzYFZRrKfyEJIbV2IKCspc9cwKqZe0P2gIM/exec';
 const LS_KEY = 'ladysoft_session_v1';
 const LS_FOTOS = 'ladysoft_fotos_v1';
 const SESION_MAX_MS = 6 * 60 * 60 * 1000;
@@ -547,6 +539,14 @@ const MODS = [
 ];
 const NIVELES_SKU = ['categoria','subcategoria','linea','tamano'];
 const NIVEL_LABEL = {categoria:'Categoría',subcategoria:'Subcategoría',linea:'Línea',tamano:'Tamaño'};
+
+// Voz del Consumidor: escalas y opciones con emoji (más fácil y rápido de responder)
+const CONOCE_MARCA = [ {v:'Sí, la conocía',e:'👀'}, {v:'No la conocía',e:'🆕'} ];
+const USO_MARCA = [ {v:'La usa actualmente',e:'🙋'}, {v:'La usó antes',e:'🕓'}, {v:'Nunca la ha usado',e:'🚫'} ];
+const OPINION_PRODUCTOS = [ {v:1,e:'😞',l:'Muy mala'}, {v:2,e:'🙁',l:'Mala'}, {v:3,e:'😐',l:'Regular'}, {v:4,e:'😊',l:'Buena'}, {v:5,e:'🤩',l:'Excelente'} ];
+const ATRIBUTOS_DESEADOS = [ {v:'Tecnología / innovación',e:'🧪'}, {v:'Mejor precio',e:'💰'}, {v:'Ingredientes / fórmula',e:'🌿'}, {v:'Empaque / presentación',e:'📦'}, {v:'Promociones y combos',e:'🎁'} ];
+const PERCEPCION_MUESTRA = [ {v:'No le gustó',e:'🙁'}, {v:'Ni fu ni fa',e:'😐'}, {v:'Le gustó',e:'🙂'}, {v:'Le encantó',e:'🤩'} ];
+const EDADES = ['18-25','26-35','36-45','46-55','56+'];
 
 let parametrizacion = { pdvs:[], usuarios:[], skus:[] };
 let modoManual = false;
@@ -565,7 +565,6 @@ let registroPromise = null;
 document.addEventListener('DOMContentLoaded', () => {
   const ahora = new Date();
   document.getElementById('heroDate').textContent = ahora.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'});
-  document.getElementById('ayudaDrive').href = AYUDAS.drive;
 
   cargarParametrizacion();
 
@@ -881,20 +880,60 @@ function renderMuestras(){
 }
 
 // ===== VOZ DEL CONSUMIDOR =====
-function agregarVoz(){ vozList.push({id:uid('voz'),categoria:'',subcategoria:'',linea:'',tamano:'',calificacion:0,recompra:'',edad:'',comentario:''}); renderVoz(); }
+// Libre (no atada a un SKU/producto puntual): captura percepción de marca, uso, atributos deseados
+// y percepción tras la muestra, con opciones de un toque (emoji) para que sea rápido de responder.
+function agregarVoz(){ vozList.push({id:uid('voz'),conoceMarca:'',usoMarca:'',opinionProductos:0,atributosDeseados:[],atributosOtro:'',percepcionMuestra:'',mejoraria:'',productoComentado:'',edad:''}); renderVoz(); }
 function eliminarVoz(id){ vozList=vozList.filter(x=>x.id!==id); renderVoz(); }
 function renderVoz(){
   const cont=document.getElementById('listaVoz'); if(!cont) return; cont.innerHTML='';
   if(vozList.length===0){ cont.innerHTML='<div class="empty-hint">Agrega la opinión de un consumidor.</div>'; return; }
   vozList.forEach((p,idx)=>{ const d=document.createElement('div'); d.className='item'; d.innerHTML=`
     <div class="item-head"><div class="item-title"><svg class="icon icon-sm"><use href="#i-chat"/></svg>Opinión ${idx+1}</div><button type="button" class="btn btn-danger btn-icon" onclick="eliminarVoz('${p.id}')"><svg class="icon icon-sm"><use href="#i-trash"/></svg></button></div>
-    ${campoSkuCascada4(p)}
-    <div class="field" style="margin-top:11px"><label class="label label-req">Calificación</label><div class="opt-grid" style="grid-template-columns:repeat(5,1fr)">${[1,2,3,4,5].map(n=>`<div class="opt"><input type="radio" name="voz-cal-${p.id}" id="voz-cal-${p.id}-${n}"${Number(p.calificacion)===n?' checked':''} onchange="setFldVoz('${p.id}','calificacion',${n})"><label for="voz-cal-${p.id}-${n}">★${n}</label></div>`).join('')}</div></div>
-    <div class="field"><label class="label label-req">¿Volvería a comprarlo?</label><div class="opt-grid">${['Sí','No','Tal vez'].map(v=>`<div class="opt"><input type="radio" name="voz-rec-${p.id}" id="voz-rec-${p.id}-${escAttr(v)}"${p.recompra===v?' checked':''} onchange="setFldVoz('${p.id}','recompra','${v}')"><label for="voz-rec-${p.id}-${escAttr(v)}"><svg class="icon icon-sm chk"><use href="#i-check"/></svg>${v}</label></div>`).join('')}</div></div>
-    <div class="field"><label class="label">Rango de edad aprox.</label><select class="select" onchange="setFldVoz('${p.id}','edad',this.value)"><option value="">Seleccionar</option>${['18-25','26-35','36-45','46-55','56+'].map(v=>`<option value="${v}"${p.edad===v?' selected':''}>${v}</option>`).join('')}</select></div>
-    <div class="field" style="margin-bottom:0"><label class="label">Comentario del consumidor</label><textarea class="textarea" placeholder="¿Qué le pareció el producto?" oninput="setFldVoz('${p.id}','comentario',this.value)">${escHtml(p.comentario||'')}</textarea></div>`; cont.appendChild(d); });
+
+    <div class="field"><label class="label label-req">¿Conocía la marca?</label>${gruposEmojiRadio('conoceMarca',p,CONOCE_MARCA)}</div>
+    <div class="field"><label class="label label-req">¿Ha usado los productos de la marca?</label>${gruposEmojiRadio('usoMarca',p,USO_MARCA)}</div>
+    <div class="field"><label class="label label-req">¿Qué opinión tiene sobre los productos?</label>${gruposEmojiRadio('opinionProductos',p,OPINION_PRODUCTOS)}</div>
+    <div class="field"><label class="label">¿Qué le gustaría ver que la competencia no ofrece?</label>
+      ${gruposAtributos(p)}
+      <input type="text" class="input" style="margin-top:9px" placeholder="Otro (opcional)" value="${escAttr(p.atributosOtro)}" oninput="setFldVoz('${p.id}','atributosOtro',this.value)">
+    </div>
+    <div class="field"><label class="label label-req">Después de entregar la muestra, ¿cuál fue su percepción?</label>${gruposEmojiRadio('percepcionMuestra',p,PERCEPCION_MUESTRA)}</div>
+    <div class="field"><label class="label">¿Qué cosas mejoraría?</label><textarea class="textarea" placeholder="Ideas o cosas por mejorar" oninput="setFldVoz('${p.id}','mejoraria',this.value)">${escHtml(p.mejoraria||'')}</textarea></div>
+    <div class="field"><label class="label">Producto o línea comentada <span style="font-weight:400;color:var(--muted)">(opcional)</span></label><input type="text" class="input" placeholder="Ej: crema hidratante facial" value="${escAttr(p.productoComentado)}" oninput="setFldVoz('${p.id}','productoComentado',this.value)"></div>
+    <div class="field" style="margin-bottom:0"><label class="label">Rango de edad aprox.</label>${gruposEdad(p)}</div>`; cont.appendChild(d); });
 }
 function setFldVoz(id,campo,v){ const p=vozList.find(x=>x.id===id); if(p) p[campo]=v; }
+function toggleAtributo(id, valor, checked){
+  const p=vozList.find(x=>x.id===id); if(!p) return;
+  if(!Array.isArray(p.atributosDeseados)) p.atributosDeseados=[];
+  if(checked){ if(p.atributosDeseados.indexOf(valor)===-1) p.atributosDeseados.push(valor); }
+  else { p.atributosDeseados=p.atributosDeseados.filter(v=>v!==valor); }
+}
+// Grupo de opciones de una sola respuesta, mostradas como botón emoji + etiqueta corta
+function gruposEmojiRadio(campo, p, opciones){
+  return `<div class="opt-grid emoji-grid">${opciones.map(o=>{
+    const idSafe='voz-'+campo+'-'+p.id+'-'+String(o.v).replace(/[^a-zA-Z0-9]/g,'');
+    const checked = String(p[campo])===String(o.v);
+    const setVal = typeof o.v==='number' ? o.v : ("'"+escAttr(String(o.v))+"'");
+    return `<div class="opt"><input type="radio" name="voz-${campo}-${p.id}" id="${idSafe}"${checked?' checked':''} onchange="setFldVoz('${p.id}','${campo}',${setVal})">
+      <label for="${idSafe}"><span class="emoji-ic">${o.e}</span><span class="emoji-lbl">${o.l||o.v}</span></label></div>`;
+  }).join('')}</div>`;
+}
+// Selección múltiple (varios atributos a la vez)
+function gruposAtributos(p){
+  const sel=p.atributosDeseados||[];
+  return `<div class="opt-grid emoji-grid">${ATRIBUTOS_DESEADOS.map(o=>{
+    const idSafe='voz-attr-'+p.id+'-'+o.v.replace(/[^a-zA-Z0-9]/g,'');
+    return `<div class="opt"><input type="checkbox" id="${idSafe}"${sel.indexOf(o.v)!==-1?' checked':''} onchange="toggleAtributo('${p.id}','${escAttr(o.v)}',this.checked)">
+      <label for="${idSafe}"><span class="emoji-ic">${o.e}</span><span class="emoji-lbl">${o.v}</span></label></div>`;
+  }).join('')}</div>`;
+}
+function gruposEdad(p){
+  return `<div class="opt-grid">${EDADES.map(v=>{
+    const idSafe='voz-edad-'+p.id+'-'+v.replace(/[^a-zA-Z0-9]/g,'');
+    return `<div class="opt"><input type="radio" name="voz-edad-${p.id}" id="${idSafe}"${p.edad===v?' checked':''} onchange="setFldVoz('${p.id}','edad','${v}')"><label for="${idSafe}">${v}</label></div>`;
+  }).join('')}</div>`;
+}
 
 // ===== FOTO DE INGRESO =====
 function aplicarFotoIngreso(data){
@@ -1034,10 +1073,12 @@ function validarModulo(id){
   }
   if(id==='muestras'){ muestrasList.forEach((p,i)=>{ if(!p.categoria) e.push('Categoría de la muestra '+(i+1)); if(!p.cantidad||p.cantidad<1) e.push('Cantidad de la muestra '+(i+1)); }); }
   if(id==='voz'){
+    if(vozList.length===0) e.push('Agrega al menos una opinión de consumidor');
     vozList.forEach((p,i)=>{
-      if(!p.categoria) e.push('Categoría de la opinión '+(i+1));
-      if(!p.calificacion) e.push('Calificación de la opinión '+(i+1));
-      if(!p.recompra) e.push('¿Volvería a comprarlo? (opinión '+(i+1)+')');
+      if(!p.conoceMarca) e.push('¿Conocía la marca? (opinión '+(i+1)+')');
+      if(!p.usoMarca) e.push('¿Ha usado la marca? (opinión '+(i+1)+')');
+      if(!p.opinionProductos) e.push('Opinión sobre los productos (opinión '+(i+1)+')');
+      if(!p.percepcionMuestra) e.push('Percepción tras la muestra (opinión '+(i+1)+')');
     });
   }
   return e;
@@ -1053,7 +1094,7 @@ function recolectarGestion(){
     ventaMotivoNo: val('ventaMotivoNo'),
     ventaProductos: ventasList.map(p=>({categoria:p.categoria,subcategoria:p.subcategoria,linea:p.linea,tamano:p.tamano,cantidad:p.cantidad})),
     muestrasProductos: muestrasList.map(p=>({categoria:p.categoria,subcategoria:p.subcategoria,linea:p.linea,tamano:p.tamano,cantidad:p.cantidad})),
-    vozConsumidor: vozList.map(p=>({categoria:p.categoria,subcategoria:p.subcategoria,linea:p.linea,tamano:p.tamano,calificacion:p.calificacion,recompra:p.recompra,edad:p.edad,comentario:p.comentario})),
+    vozConsumidor: vozList.map(p=>({conoceMarca:p.conoceMarca,usoMarca:p.usoMarca,opinionProductos:p.opinionProductos,atributosDeseados:p.atributosDeseados||[],atributosOtro:p.atributosOtro,percepcionMuestra:p.percepcionMuestra,mejoraria:p.mejoraria,productoComentado:p.productoComentado,edad:p.edad})),
     observacionesGenerales: val('observacionesGenerales'), proximaVisita: val('proximaVisita'),
     modulosGuardados: ''
   };
@@ -1104,7 +1145,22 @@ function renderResumen(){
   const muH = muestrasList.length ? muestrasList.map((p,i)=>'<div class="res-mini">'+(i+1)+'. <b>'+(escHtml(nombreSku(p))||'—')+'</b> · '+(p.cantidad||0)+' und</div>').join('') : '<div class="res-mini">Sin muestras registradas</div>';
   h+=secRaw('i-image','Muestras ('+muestrasList.length+')', muH);
 
-  const vozH = vozList.length ? vozList.map((p,i)=>'<div class="res-mini">'+(i+1)+'. <b>'+(escHtml(nombreSku(p))||'Producto general')+'</b> · '+'★'.repeat(p.calificacion||0)+' · Recompra: '+(p.recompra||'—')+(p.comentario?' · "'+escHtml(p.comentario)+'"':'')+'</div>').join('') : '<div class="res-mini">Sin opiniones registradas</div>';
+  const vozH = vozList.length ? vozList.map((p,i)=>{
+    const op=OPINION_PRODUCTOS.find(o=>String(o.v)===String(p.opinionProductos));
+    const pm=PERCEPCION_MUESTRA.find(o=>o.v===p.percepcionMuestra);
+    const atributos=[...(p.atributosDeseados||[]), p.atributosOtro].filter(Boolean).join(', ');
+    return '<div style="padding:9px 0;border-bottom:1px solid var(--line)">'+
+      '<div class="res-mini"><b>Opinión '+(i+1)+'</b></div>'+
+      '<div class="res-mini">¿Conocía la marca? '+(escHtml(p.conoceMarca)||'—')+'</div>'+
+      '<div class="res-mini">¿La ha usado? '+(escHtml(p.usoMarca)||'—')+'</div>'+
+      '<div class="res-mini">Opinión sobre productos: '+(op?op.e+' '+op.l:'—')+'</div>'+
+      (atributos?'<div class="res-mini">Le gustaría ver: '+escHtml(atributos)+'</div>':'')+
+      '<div class="res-mini">Percepción tras la muestra: '+(pm?pm.e+' '+pm.v:'—')+'</div>'+
+      (p.productoComentado?'<div class="res-mini">Producto: '+escHtml(p.productoComentado)+'</div>':'')+
+      (p.mejoraria?'<div class="res-mini">Mejoraría: "'+escHtml(p.mejoraria)+'"</div>':'')+
+      (p.edad?'<div class="res-mini">Edad aprox.: '+escHtml(p.edad)+'</div>':'')+
+    '</div>';
+  }).join('') : '<div class="res-mini">Sin opiniones registradas</div>';
   h+=secRaw('i-chat','Voz del Consumidor ('+vozList.length+')', vozH);
 
   h+='<div class="res-sec-h" style="margin-top:4px"><svg class="icon icon-sm"><use href="#i-list"/></svg>Estado de módulos</div>';
@@ -1130,7 +1186,23 @@ function generarTextoGestion(){
   if(ventaR==='No') t+='   ↳ Motivo: '+(val('ventaMotivoNo')||'-')+'\n';
   if(ventaR==='Si'){ ventasList.forEach(p=>{ t+='   • '+(nombreSku(p)||'-')+'  _x'+(p.cantidad||0)+'_\n'; }); }
   if(muestrasList.length){ t+='\n🎁 *MUESTRAS*\n'; muestrasList.forEach(p=>{ t+='   • '+(nombreSku(p)||'-')+'  _x'+(p.cantidad||0)+'_\n'; }); }
-  if(vozList.length){ t+='\n💬 *VOZ DEL CONSUMIDOR*\n'; vozList.forEach(p=>{ t+='   • '+(nombreSku(p)||'Producto general')+'  '+'★'.repeat(p.calificacion||0)+'  · Recompra: '+(p.recompra||'-')+(p.edad?' · '+p.edad:'')+'\n'; if(p.comentario) t+='     ↳ "'+p.comentario+'"\n'; }); }
+  if(vozList.length){
+    t+='\n💬 *VOZ DEL CONSUMIDOR*\n';
+    vozList.forEach((p,i)=>{
+      const op=OPINION_PRODUCTOS.find(o=>String(o.v)===String(p.opinionProductos));
+      const pm=PERCEPCION_MUESTRA.find(o=>o.v===p.percepcionMuestra);
+      const atributos=[...(p.atributosDeseados||[]), p.atributosOtro].filter(Boolean).join(', ');
+      t+='   ▸ Opinión '+(i+1)+':\n';
+      t+='      • ¿Conocía la marca?: '+(p.conoceMarca||'-')+'\n';
+      t+='      • ¿La ha usado?: '+(p.usoMarca||'-')+'\n';
+      t+='      • Opinión sobre productos: '+(op?op.e+' '+op.l:'-')+'\n';
+      if(atributos) t+='      • Le gustaría ver: '+atributos+'\n';
+      t+='      • Percepción tras la muestra: '+(pm?pm.e+' '+pm.v:'-')+'\n';
+      if(p.productoComentado) t+='      • Producto: '+p.productoComentado+'\n';
+      if(p.mejoraria) t+='      • Mejoraría: '+p.mejoraria+'\n';
+      if(p.edad) t+='      • Edad aprox.: '+p.edad+'\n';
+    });
+  }
   if(val('proximaVisita')) t+='\n📅 Próxima visita: '+val('proximaVisita')+'\n';
   if(val('observacionesGenerales')) t+='📝 '+val('observacionesGenerales')+'\n';
   t+='\n_Enviado desde Lady Soft · Synaptic_';
